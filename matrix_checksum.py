@@ -10,14 +10,17 @@ import argparse
 class ChecksumMatrix:
     def __init__(self, A, B, C):
         self.C = C
-        self.c = A.sum(axis=0)  # sum over columns of A → shape (3,)
-        self.r = B.sum(axis=1)  # sum over rows of B → shape (3,)
+        self.c = A.sum(axis=0)  # sum over columns of A
+        self.r = B.sum(axis=1)  # sum over rows of B
 
         self.r_c = A @ self.r
         self.c_c = self.c @ B
 
-        col_check = (self.c_c == C.sum(axis=0)).astype(np.float32)
-        row_check = (self.r_c == C.sum(axis=1)).astype(np.float32)
+        # Tolerant comparison instead of equality check to avoid false failures from float rounding
+        col_check = np.isclose(self.c_c, C.sum(axis=0), rtol=1e-3, atol=1e-2)
+        row_check = np.isclose(self.r_c, C.sum(axis=1), rtol=1e-3, atol=1e-2)
+        # col_check = (self.c_c == C.sum(axis=0)).astype(np.float32)
+        # row_check = (self.r_c == C.sum(axis=1)).astype(np.float32)
 
         col_errors = np.where(col_check == 0)[0]
         row_errors = np.where(row_check == 0)[0]
